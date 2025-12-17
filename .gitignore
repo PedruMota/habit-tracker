@@ -1,0 +1,23 @@
+# --- security ---
+credentials.json
+client_secret.json
+service_account.json
+
+# --- env and venv ---
+.env
+.venv/
+venv/
+ENV/
+
+# --- python ---
+__pycache__/
+*.pyc
+
+# --- IDEs and OS ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- data ---
+*.csv
+*.xlsx
