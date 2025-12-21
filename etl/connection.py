@@ -1,56 +1,80 @@
 import gspread
 import pandas as pd
+import os
+from pathlib import Path
 
-def load_data_from_sheets():
-    # 1. Autenticação
-    # O gspread procura o arquivo de credenciais. 
-    # Em projetos reais (Streamlit Cloud), usaremos 'Secrets', 
-    # mas localmente usamos o arquivo JSON.
-    gc = gspread.service_account(filename='credentials.json')
+# Constants for configuration
+CREDENTIALS_FILE = 'credentials.json'
+SPREADSHEET_NAME = "habit_tracker"  # Google Sheet name
+# List of sheets to iterate over
+MONTHLY_SHEETS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
-    # 2. Abrir a planilha
-    # Substitua pelo nome EXATO da sua planilha no Google ou a URL dela
-    sh = gc.open("habits 2025") # Exemplo: nome do arquivo lá no Google Drive
-
-    # 3. Consolidar todas as abas (Jan, Fev, Mar...)
-    all_data = []
+def get_gspread_client():
+    """
+    Authenticates with the Google Sheets API using the service account.
     
-    # Lista das abas que queremos ler (ajuste conforme seus nomes reais)
-    worksheets_names = ["jan", "feb", "mar", "apr", "may", "jun", "jul"]
+    Returns:
+        gspread.Client: The authenticated client instance.
+    
+    Raises:
+        FileNotFoundError: If the credentials file is missing.
+    """
+    creds_path = Path(CREDENTIALS_FILE)
+    
+    if not creds_path.exists():
+        raise FileNotFoundError(f"Credentials file not found at: {creds_path.absolute()}")
 
-    for sheet_name in worksheets_names:
-        try:
-            # Seleciona a aba
-            worksheet = sh.worksheet(sheet_name)
-            
-            # Pega todos os dados como lista de dicionários
-            data = worksheet.get_all_records()
-            
-            # Transforma em DataFrame
-            df = pd.DataFrame(data)
-            
-            # Opcional: Adicionar uma coluna para saber de qual mês veio (se necessário)
-            # df['month_sheet'] = sheet_name 
-            
-            all_data.append(df)
-            print(f"Aba '{sheet_name}' carregada com sucesso!")
-            
-        except gspread.WorksheetNotFound:
-            print(f"Aviso: Aba '{sheet_name}' não encontrada.")
+    # Authenticate using the service account file
+    gc = gspread.service_account(filename=str(creds_path))
+    return gc
 
-    # 4. Juntar tudo em um único DataFrame
-    if all_data:
-        full_df = pd.concat(all_data, ignore_index=True)
-        return full_df
-    else:
+def load_raw_data():
+    """
+    Fetches and consolidates data from multiple worksheets in the Google Sheet.
+
+    Returns:
+        pd.DataFrame: A single DataFrame containing data from all months, 
+                      or None if an error occurs.
+    """
+    print(f"--- Connecting to Google Sheets: {SPREADSHEET_NAME} ---")
+    
+    try:
+        client = get_gspread_client()
+        sh = client.open(SPREADSHEET_NAME)
+        
+        all_data_frames = []
+
+        for sheet_name in MONTHLY_SHEETS:
+            try:
+                worksheet = sh.worksheet(sheet_name)
+                # get_all_records returns a list of dictionaries
+                data = worksheet.get_all_records()
+                
+                if data:
+                    df = pd.DataFrame(data)
+                    all_data_frames.append(df)
+                    print(f"✓ Successfully loaded: {sheet_name}")
+                else:
+                    print(f"⚠ Warning: Worksheet '{sheet_name}' is empty.")
+                    
+            except gspread.WorksheetNotFound:
+                print(f"✕ Error: Worksheet '{sheet_name}' not found.")
+
+        if all_data_frames:
+            # Concatenate all monthly dataframes into one
+            full_df = pd.concat(all_data_frames, ignore_index=True)
+            return full_df
+        else:
+            print("No data could be loaded.")
+            return None
+
+    except Exception as e:
+        print(f"CRITICAL ERROR during data extraction: {e}")
         return None
 
-# Testando a função
+# Allow running this script directly for testing purposes
 if __name__ == "__main__":
-    df_final = load_data_from_sheets()
-    if df_final is not None:
-        print("\nDados carregados! Primeiras 5 linhas:")
-        print(df_final.head())
-        # Aqui você pode chamar sua função de limpeza (o melt/tidy data)
-    else:
-        print("Erro ao carregar dados.")
+    df = load_raw_data()
+    if df is not None:
+        print("\nData Sample (Head):")
+        print(df.head())
