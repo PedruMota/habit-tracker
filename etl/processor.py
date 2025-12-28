@@ -1,64 +1,76 @@
 import pandas as pd
 import numpy as np
 
-def process_data(df):
+def _process_single_month(df_raw):
     """
-    Cleans and transforms the raw DataFrame from Google Sheets into a Tidy format.
-    
-    Transformation Steps:
-    1. Melt: Unpivot date columns into rows.
-    2. Cast Types: Ensure dates are datetime objects.
-    3. Score Calculation: Map status symbols to numeric scores.
-    4. Feature Engineering: Add auxiliary time-based columns.
-
-    Args:
-        df (pd.DataFrame): The raw dataframe with dates as columns.
-
-    Returns:
-        pd.DataFrame: A processed, long-format dataframe.
+    Função auxiliar que limpa UM ÚNICO mês.
+    Como processamos mês a mês, não temos conflito de colunas de datas.
     """
-    if df is None or df.empty:
+    if df_raw.empty:
         return pd.DataFrame()
 
-    # 1. Identify ID variables and Value variables
-    # 'type' and 'habit' are identifiers. All other columns are treated as dates.
+    # 1. Melt (Verticalizar)
+    # Identificamos as colunas fixas. O resto é data.
     id_vars = ['type', 'habit']
-    value_vars = [c for c in df.columns if c not in id_vars]
+    value_vars = [c for c in df_raw.columns if c not in id_vars]
     
-    # 2. Melt (Unpivot)
-    # Transforms wide format [Habit | Jan-01 | Jan-02] -> Long format [Habit | Date | Status]
-    df_melted = df.melt(id_vars=id_vars, value_vars=value_vars, var_name='date', value_name='status')
+    df_melted = df_raw.melt(id_vars=id_vars, value_vars=value_vars, var_name='date_str', value_name='status')
     
-    # 3. Date Parsing
-    # 'coerce' turns invalid strings (like empty headers) into NaT (Not a Time)
-    df_melted['date'] = pd.to_datetime(df_melted['date'], errors='coerce')
-    
-    # Remove rows with invalid dates (artifacts from empty Excel columns)
-    df_melted = df_melted.dropna(subset=['date'])
-    
-    # 4. Status Cleaning & Scoring
-    # Remove accidental whitespace
+    # 2. Limpeza Básica
     df_melted['status'] = df_melted['status'].astype(str).str.strip()
     
-    # Logic for Scoring:
-    # '1' -> 1.0 (Success)
-    # '0' -> 0.0 (Failure)
-    # '-' -> NaN (Rest day/Not applicable - excluded from averages)
+    # Remover dias vazios (onde não há registro)
+    # Isso evita processar colunas vazias que o Google Sheets as vezes traz
+    df_melted = df_melted[df_melted['status'] != '']
+    
+    return df_melted
+
+def process_data(raw_data_list):
+    """
+    Recebe uma LISTA de dataframes brutos, processa cada um individualmente
+    e só no final concatena.
+    """
+    if not raw_data_list:
+        return pd.DataFrame()
+
+    processed_frames = []
+
+    # Passo 1: Processar cada mês isoladamente
+    for raw_df in raw_data_list:
+        clean_month = _process_single_month(raw_df)
+        processed_frames.append(clean_month)
+    
+    # Passo 2: Juntar tudo (Agora é seguro, pois todos têm as mesmas 4 colunas)
+    if not processed_frames:
+        return pd.DataFrame()
+        
+    full_df = pd.concat(processed_frames, ignore_index=True)
+
+    # Passo 3: Conversão de Tipos e Feature Engineering (No DF Unificado)
+    
+    # Converter Data (Dayfirst=True para formato BR)
+    full_df['date'] = pd.to_datetime(full_df['date_str'], dayfirst=True, errors='coerce')
+    
+    # Remover datas inválidas
+    full_df = full_df.dropna(subset=['date'])
+    
+    # Calcular Score
     conditions = [
-        df_melted['status'] == '1',
-        df_melted['status'] == '0'
+        full_df['status'] == '1',
+        full_df['status'] == '0'
     ]
     choices = [1.0, 0.0]
     
-    # np.select is more performant than .apply() for vector operations
-    df_melted['score'] = np.select(conditions, choices, default=np.nan)
+    full_df['score'] = np.select(conditions, choices, default=np.nan)
     
-    # 5. Feature Engineering (for Dashboard Filters)
-    df_melted['month_name'] = df_melted['date'].dt.strftime('%B')  # e.g., "January"
-    df_melted['day_of_week'] = df_melted['date'].dt.day_name()     # e.g., "Monday"
-    df_melted['is_active_day'] = df_melted['score'].notna()        # Boolean flag
+    # Criar colunas extras
+    full_df['month_name'] = full_df['date'].dt.strftime('%B')
+    full_df['day_of_week'] = full_df['date'].dt.day_name()
     
-    # Final Sorting
-    df_melted = df_melted.sort_values(by=['date', 'type', 'habit'])
+    # Ordenar
+    full_df = full_df.sort_values(by=['date', 'type', 'habit'])
     
-    return df_melted
+    # Selecionar apenas colunas úteis
+    final_cols = ['date', 'type', 'habit', 'status', 'score', 'month_name', 'day_of_week']
+    
+    return full_df[final_cols]
