@@ -105,7 +105,8 @@ One of the core challenges in this project was defining "Success" in a quantifia
 
 1.  **Symmetric Rule (+1 / -1):** A zero-sum game. Good for building strict discipline where consistency is key.
 2.  **Progressive Rule (+1 / -0.5):** Focuses on "Growth Mindset." A miss penalizes the score, but doesn't erase all progress made by previous hits.
-3.  **Context-Aware Scaling:** The dashboard automatically adjusts its color scales. If a user filters for a single habit, 100% performance is calculated based on that specific habit's history, rather than the global total.
+3.  **Custom Weights:** Gives the user full control to define their own penalty/reward system (e.g., heavily penalizing misses on critical habits while being lenient on others).
+4.  **Context-Aware Scaling:** The dashboard automatically adjusts its color scales. If a user filters for a single habit, 100% performance is calculated based on that specific habit's history, rather than the global total.
 
 ---
 
