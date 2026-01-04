@@ -2,7 +2,7 @@ import plotly.express as px
 import pandas as pd
 import calendar
 
-# --- PALETA PADRÃO ---
+# --- STANDARD PALETTE ---
 DEFAULT_COLOR = '#00CC96' 
 
 def get_trend_chart(df, color_line=DEFAULT_COLOR):
@@ -21,7 +21,7 @@ def get_trend_chart(df, color_line=DEFAULT_COLOR):
         color_discrete_sequence=[color_line]
     )
     
-    # Linha de Média Global
+    # Global Average Line
     avg_score = df['score'].mean()
     fig.add_hline(
         y=avg_score, 
@@ -88,7 +88,7 @@ def get_category_bar_chart(df, color_bar=DEFAULT_COLOR):
     
     fig.update_traces(marker_color=color_bar, textposition='auto')
     
-    # --- NOVO: Linha de Média Global ---
+    # --- Global Average Line ---
     avg_score = df['score'].mean()
     fig.add_vline(
         x=avg_score, 
@@ -108,32 +108,31 @@ def get_category_bar_chart(df, color_bar=DEFAULT_COLOR):
 
 def get_productivity_heatmap(df, score_map, color_range, color_scale='RdYlGn'):
     """
-    Heatmap Anual (Estilo Density/GitHub).
-    NOTA: O parâmetro 'color_range' é recebido para compatibilidade, 
-    mas NÃO É USADO (range_color removido) para deixar a escala livre/automática.
+    Annual Heatmap (Density/GitHub Style).
+    NOTE: The 'color_range' parameter is received for compatibility, 
+    but NOT USED (range_color removed) to allow free/automatic scaling.
     """
-    # 1. Aplicar mapa de pontuação
+    # 1. Apply scoring map
     df_scored = df.copy()
     df_scored['net_points'] = df_scored['status'].astype(str).map(score_map).fillna(0)
     
-    # 2. Agrupar por Dia
+    # 2. Group by Day
     daily_score = df_scored.groupby('date')['net_points'].sum().reset_index()
     
-    # 3. Preparar eixos
+    # 3. Prepare axes
     daily_score['week_of_year'] = daily_score['date'].dt.isocalendar().week
     daily_score['day_of_week'] = daily_score['date'].dt.dayofweek
     days_map = {0:'Mon', 1:'Tue', 2:'Wed', 3:'Thu', 4:'Fri', 5:'Sat', 6:'Sun'}
     daily_score['day_name'] = daily_score['day_of_week'].map(days_map)
     
-    # 4. Plotar Heatmap (DENSITY)
-    # A escala se ajustará sozinha aos dados (Min/Max automáticos)
+    # 4. Plot Heatmap (DENSITY)
     fig = px.density_heatmap(
         daily_score,
         x="week_of_year",
         y="day_name",
         z="net_points",
         color_continuous_scale=color_scale,
-        # range_color=color_range, <--- REMOVIDO PARA ESCALA LIVRE
+        # range_color=color_range, <--- REMOVED FOR FREE SCALE
         labels={'week_of_year': 'Week No.', 'day_name': '', 'net_points': 'Score'}
     )
     
@@ -152,10 +151,10 @@ def get_productivity_heatmap(df, score_map, color_range, color_scale='RdYlGn'):
 
 def get_wall_calendar_view(df, score_map, color_range, color_scale='RdYlGn'):
     """
-    Calendar dinâmico: Aceita mapa de pontos e limites de cor.
+    Dynamic Calendar: Accepts point map and color limits.
     """
     df_cal = df.copy()
-    # 1. Aplicar o mapa de pontuação recebido
+    # 1. Apply received scoring map
     df_cal['net_points'] = df_cal['status'].astype(str).map(score_map).fillna(0)
     
     daily_data = df_cal.groupby('date')['net_points'].sum().reset_index()
@@ -182,7 +181,7 @@ def get_wall_calendar_view(df, score_map, color_range, color_scale='RdYlGn'):
         facet_col_wrap=3,
         color="net_points",
         color_continuous_scale=color_scale,
-        range_color=color_range, # Limites dinâmicos
+        range_color=color_range, # Dynamic limits
         symbol_sequence=['square'],
         hover_data=['date', 'net_points'],
         text='day_num'
@@ -223,24 +222,24 @@ def get_day_of_week_chart(df, color_bar=DEFAULT_COLOR):
     df_dow['day_name'] = df_dow['date'].dt.day_name()
     df_dow['day_num'] = df_dow['date'].dt.dayofweek
     
-    # Agrupa e calcula média
+    # Group and calculate mean
     dow_stats = df_dow.groupby(['day_num', 'day_name'])['score'].mean().reset_index()
     
-    # Ordena de Segunda (0) a Domingo (6)
+    # Sort from Monday (0) to Sunday (6)
     dow_stats = dow_stats.sort_values('day_num')
     
     fig = px.bar(
         dow_stats,
         x='day_name',
         y='score',
-        title='', # Controlado pelo Streamlit
+        title='', # Controlled by Streamlit
         labels={'score': 'Success Rate', 'day_name': ''},
-        text_auto='.1%' # Mostra valor na barra
+        text_auto='.1%' # Show value on bar
     )
     
     fig.update_traces(marker_color=color_bar)
     
-    # Adiciona linha de média geral para comparação
+    # Add global average line for comparison
     avg_score = df['score'].mean()
     fig.add_hline(y=avg_score, line_dash="dot", line_color="gray", annotation_text="Avg", annotation_position="top right")
     
@@ -259,32 +258,30 @@ def get_correlation_heatmap(df):
     Correlation Matrix between Habits.
     Answers: "When I do Habit A, do I also do Habit B?"
     """
-    # 1. Pivotar: Linhas=Datas, Colunas=Hábitos, Valores=Score
-    # Precisamos mapear os status para números primeiro
-    # Usaremos uma lógica simples: 1 (Feito), 0 (Falha). Descanso vira NaN (não entra na correlação)
+    # 1. Pivot: Rows=Dates, Cols=Habits, Values=Score
+    # We need to map statuses to numbers first
+    # Logic: 1 (Done), 0 (Miss). Rest becomes NaN (ignored in correlation)
     
     df_pivot = df.pivot(index='date', columns='habit', values='status')
     
     # Map: '1'->1, '0'->0, '-'->NaN
-    # A correlação ignora NaNs, o que é perfeito (dias de descanso não atrapalham a análise)
+    # Correlation ignores NaNs, which is perfect (rest days don't affect analysis)
     df_pivot = df_pivot.replace({'1': 1, '0': 0, '-': None})
     df_pivot = df_pivot.apply(pd.to_numeric)
     
-    # Se houver menos de 2 hábitos filtrados, não dá para fazer correlação
+    # If fewer than 2 filtered habits, correlation cannot be calculated
     if df_pivot.shape[1] < 2:
         return None
         
-    # 2. Calcular Correlação (Pearson)
+    # 2. Calculate Correlation (Pearson)
     corr_matrix = df_pivot.corr()
     
-    # 3. Plotar Heatmap
-    # Usamos escala divergente (Vermelho = Correlação Inversa, Verde = Direta)
+    # 3. Plot Heatmap
     fig = px.imshow(
         corr_matrix,
-        text_auto='.2f', # Mostra o coeficiente
+        text_auto='.2f', # Show coefficient
         aspect="auto",
-        color_continuous_scale="RdBu", # Vermelho-Branco-Azul (Padrão científico para corr)
-        # Ou "RdYlGn" se preferir manter o tema, mas RdBu é mais comum para correlação
+        color_continuous_scale="RdBu",
         zmin=-1, zmax=1,
         labels=dict(x="Habit", y="Habit", color="Correlation")
     )
@@ -293,7 +290,7 @@ def get_correlation_heatmap(df):
         margin=dict(t=0, l=0, r=0, b=0),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        height=600 # Quadrado grande
+        height=600 # Large square
     )
     
     return fig
