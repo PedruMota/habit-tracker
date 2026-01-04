@@ -26,6 +26,21 @@ Unlike standard mobile apps, this tool focuses on **Analytical Depth**. It allow
 
 ---
 
+## 💾 Data Architecture & Pipeline
+
+The application is powered by a **Real-Time ETL Pipeline** connected to a Google Sheets backend via API. This allows for zero-friction data entry via mobile (using the Sheets app), which is instantly ingested by the Python application.
+
+**The Data Schema**
+To ensure accurate KPIs, I moved beyond simple Boolean (True/False) logic. The system parses three distinct states to handle "Rest Days" correctly without skewing the Success Rate:
+
+* `1`: **Hit** (Task completed successfully).
+* `0`: **Miss** (Task failed).
+* `-`: **Skip/Rest** (Legitimate rest day or non-applicable). These are filtered out during the ETL process to prevent false negatives in the statistics.
+
+![Raw Data Schema](assets/data1.png)
+
+---
+
 ## 📊 Dashboard Features
 
 ### 1. KPI & Trend Analysis
