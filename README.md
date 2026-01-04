@@ -79,15 +79,23 @@ This section leverages statistical methods to uncover hidden behaviors.
 
 ### Folder Structure
 ```bash
+├── .streamlit/
+│   └── config.toml      # UI Configuration (Dark mode, Primary Color)
+├── assets/              # Images used in this README
 ├── etl/
-│   ├── connection.py    # Raw data ingestion
-│   └── processor.py     # Data cleaning and transformation
+│   ├── connection.py    # Google Sheets API connection logic
+│   └── processor.py     # Data cleaning, transformation and ternary logic
 ├── interface/
-│   ├── charts.py        # Reusable Plotly figure functions
-│   └── kpis.py          # Metric calculations
-├── main.py              # Application entry point
-├── requirements.txt     # Dependencies
-└── README.md            # Documentation
+│   ├── __init__.py      # Makes the folder a Python package
+│   ├── charts.py        # Reusable Plotly visualization functions
+│   └── kpis.py          # Mathematical logic for KPI calculations
+├── notebooks/
+│   └── data_check.ipynb # Sandbox for testing data integrity
+├── .gitignore           # Specifies files to be ignored by Git
+├── credentials.json     # Google API Keys (NOT committed to repo)
+├── main.py              # Main application entry point
+├── README.md            # Project documentation
+└── requirements.txt     # List of project dependencies
 ```
 ---
 
