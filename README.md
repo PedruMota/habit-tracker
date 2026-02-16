@@ -11,22 +11,22 @@
 
 ---
 
-## 🧐 About The Project
+## About The Project
 
 This project is a specialized BI dashboard designed to track, analyze, and visualize personal performance metrics.
 
-> **🔒 Privacy Disclaimer:** The data presented in the screenshots has been **perturbed** (anonymized and randomized) for demonstration purposes to protect sensitive personal information.
+> **Privacy Disclaimer:** The data presented in the screenshots has been **perturbed** (anonymized and randomized) for demonstration purposes to protect sensitive personal information.
 
 Unlike standard mobile apps, this tool focuses on **Analytical Depth**. It allows the user to drill down into specific categories (Health, Work, Study), understand weekly rhythms, and visualize consistency over long periods.
 
-### 🎯 Key Objectives
+### Key Objectives
 * **ETL Automation:** Seamlessly ingest and clean raw data using a custom pipeline.
 * **Dynamic Storytelling:** Visuals that adapt to user filters (Date Range, Category, Specific Habits).
 * **Behavioral Economics:** Custom scoring logic (Symmetric, Progressive and Custom) to incentivize consistency and prevent burnout.
 
 ---
 
-## 💾 Data Architecture & Pipeline
+## Data Architecture & Pipeline
 
 The application is powered by a **Real-Time ETL Pipeline** connected to a Google Sheets backend via API. This allows for zero-friction data entry via mobile (using the Sheets app), which is instantly ingested by the Python application.
 
@@ -41,7 +41,7 @@ To ensure accurate KPIs, I moved beyond simple Boolean (True/False) logic. The s
 
 ---
 
-## 📊 Dashboard Features
+## Dashboard Features
 
 ### 1. KPI & Trend Analysis
 The landing page provides an immediate health check of the user's routine.
@@ -69,7 +69,7 @@ This section leverages statistical methods to uncover hidden behaviors.
 
 ---
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 * **Core:** Python 3.11+
 * **Frontend / UI:** Streamlit (Custom CSS injection for Dark Mode & Minimalist UI).
@@ -99,7 +99,7 @@ This section leverages statistical methods to uncover hidden behaviors.
 ```
 ---
 
-## 🧠 Design & Business Logic
+## Design & Business Logic
 
 One of the core challenges in this project was defining "Success" in a quantifiable way. To solve this, I implemented a flexible scoring engine based on Behavioral Economics principles:
 
@@ -110,7 +110,7 @@ One of the core challenges in this project was defining "Success" in a quantifia
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 1.  **Clone the repository**
     ```bash
@@ -130,7 +130,7 @@ One of the core challenges in this project was defining "Success" in a quantifia
 
 ---
 
-## 📬 Contact
+## Contact
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/pedro-mota-864084204/)
 [![Email](https://img.shields.io/badge/Email-333333?style=for-the-badge&logo=gmail&logoColor=white)](mailto:pedroaamota@outlook.com)
