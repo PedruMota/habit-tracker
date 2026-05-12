@@ -101,16 +101,26 @@ def main():
         # --- SIDEBAR FILTERS ---
         st.sidebar.header("Filter Data")
         
-        min_date = df['date'].min().date()
-        max_date = df['date'].max().date()
+        # --- NOVO: SELEÇÃO DE ANO ---
+        # Descobre quais anos existem nos dados e ordena do mais recente pro mais antigo
+        available_years = sorted(df['date'].dt.year.unique(), reverse=True)
+        selected_year = st.sidebar.selectbox("Select Year", available_years, key="year_selector")
+        
+        # Filtra a base de dados GERAL para focar só no ano escolhido
+        df_year = df[df['date'].dt.year == selected_year].copy()
+        
+        # Agora usamos df_year para definir os limites do calendário
+        min_date = df_year['date'].min().date()
+        max_date = df_year['date'].max().date()
         date_range = st.sidebar.date_input("Period", value=(min_date, max_date), min_value=min_date, max_value=max_date, key='date_range')
         st.sidebar.markdown("---")
         
         st.sidebar.caption("Categories")
-        all_types = sorted(df['type'].unique())
+        # Usamos df_year para listar apenas as categorias ativas naquele ano
+        all_types = sorted(df_year['type'].unique())
         selected_types = st.sidebar.pills("Select categories:", all_types, default=all_types, selection_mode="multi", label_visibility="collapsed", key='cat_filter')
         
-        available_habits = sorted(df[df['type'].isin(selected_types or [])]['habit'].unique())
+        available_habits = sorted(df_year[df_year['type'].isin(selected_types or [])]['habit'].unique())
         
         with st.sidebar.expander("Detailed Habit Filter", expanded=False):
             if st.button("Select All Habits"):
@@ -122,11 +132,12 @@ def main():
             st.warning("Please select at least one Category.")
             return
 
-        mask_date = (df['date'].dt.date >= date_range[0]) & (df['date'].dt.date <= date_range[1])
-        mask_type = df['type'].isin(selected_types)
-        mask_habit = df['habit'].isin(selected_habits)
+        # A máscara final de filtro usa df_year
+        mask_date = (df_year['date'].dt.date >= date_range[0]) & (df_year['date'].dt.date <= date_range[1])
+        mask_type = df_year['type'].isin(selected_types)
+        mask_habit = df_year['habit'].isin(selected_habits)
         
-        df_filtered = df[mask_date & mask_type & mask_habit].copy()
+        df_filtered = df_year[mask_date & mask_type & mask_habit].copy()
         
         if df_filtered.empty:
             st.warning("No data visible.")

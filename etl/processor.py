@@ -12,6 +12,13 @@ def _process_single_month(df_raw):
     # 1. Melt (Verticalizar)
     # Identificamos as colunas fixas. O resto é data.
     id_vars = ['type', 'habit']
+    
+    # IMPORTANTE: Avisar o melt sobre as novas colunas que vieram do connection.py
+    if '_year' in df_raw.columns:
+        id_vars.append('_year')
+    if '_origin_sheet' in df_raw.columns:
+        id_vars.append('_origin_sheet')
+
     value_vars = [c for c in df_raw.columns if c not in id_vars]
     
     df_melted = df_raw.melt(id_vars=id_vars, value_vars=value_vars, var_name='date_str', value_name='status')
@@ -40,17 +47,43 @@ def process_data(raw_data_list):
         clean_month = _process_single_month(raw_df)
         processed_frames.append(clean_month)
     
-    # Passo 2: Juntar tudo (Agora é seguro, pois todos têm as mesmas 4 colunas)
+    # Passo 2: Juntar tudo 
     if not processed_frames:
         return pd.DataFrame()
         
     full_df = pd.concat(processed_frames, ignore_index=True)
 
+    # =================================================================
+    # Passo 2.5: MAPEAMENTO "DE-PARA" (Schema Evolution)
+    # =================================================================
+    mapeamento_habitos = {
+        "Academia": "Musculação",
+        "Postura/Mobilidade": "Postura/Dicção",
+        "Dicção/Voz": "Postura/Dicção",
+        "Jogar": "Assistir/Jogar",
+        "Assistir": "Assistir/Jogar",
+        "Mercado Financeiro": "Leitura/Notícias",
+        "Faculdade": "Produzir",
+        "Leitura/Música": "Música"
+    }
+    
+    full_df['habit'] = full_df['habit'].replace(mapeamento_habitos)
+    
+    # Prevenção de erro: Remove duplicatas caso dois hábitos antigos caiam no mesmo dia sob o mesmo nome novo
+    full_df = full_df.drop_duplicates(subset=['date_str', 'habit'], keep='first')
+    # =================================================================
+
     # Passo 3: Conversão de Tipos e Feature Engineering (No DF Unificado)
     
     # Converter Data (Dayfirst=True para formato BR)
+    # Como adicionamos o _year lá no connection, as datas de Fev/2026 não vão sobrescrever Fev/2025
+    # O pd.to_datetime é inteligente o suficiente para parsear corretamente
     full_df['date'] = pd.to_datetime(full_df['date_str'], dayfirst=True, errors='coerce')
     
+    # Se quiser ser explícito e usar o _year para forçar a data correta caso o to_datetime falhe:
+    # (Apenas deixe comentado, se der problema com datas de anos diferentes, ativamos isso)
+    # full_df['date'] = pd.to_datetime(full_df['date_str'] + '/' + full_df['_year'].astype(str), format='%d/%m/%Y', errors='coerce')
+
     # Remover datas inválidas
     full_df = full_df.dropna(subset=['date'])
     
