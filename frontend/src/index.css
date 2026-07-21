@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm, personal palette — cream page, terracotta accent. Deliberately not
+     the dark+teal "admin panel" look of the original Streamlit build. */
+  --color-brand: #c1603a;
+  --color-brand-strong: #a94f2d;
+  --color-page: #f4eee0;
+  --color-surface: #fffbf3;
+  --color-surface-2: #efe4cf;
+  --color-surface-3: #e6d8bd;
+  --color-ink: #2b2420;
+  --color-ink-secondary: #5c5044;
+  --color-ink-muted: #8c7d6a;
+  --color-border: rgba(43, 36, 32, 0.08);
+  --color-gridline: rgba(43, 36, 32, 0.09);
+  --color-success: #3f7d3f;
+  --color-danger: #b5432f;
+  --font-sans: "Iowan Old Style", "Georgia", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Iowan Old Style", "Georgia", serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-image: radial-gradient(circle at 15% 0%, rgba(193, 96, 58, 0.06), transparent 45%);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 25%, transparent);
+}
+
+* {
+  scrollbar-color: var(--color-surface-3) transparent;
+  scrollbar-width: thin;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
