@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import rawSheets from "./data/sample-raw.json";
 import { processRawSheets } from "./lib/etl";
 import { calculateGlobalMetrics } from "./lib/stats";
 import type { HabitRecord, RawSheet } from "./types";
+
+// Prefers your own git-ignored export (frontend/src/data/local-data.json,
+// produced by `python etl/export_for_frontend.py`) over the bundled sample
+// dataset, so a real Google Sheets export is used automatically when present.
+const dataModules = import.meta.glob<{ default: RawSheet[] }>("./data/{local-data,sample-raw}.json", { eager: true });
+const rawSheets: RawSheet[] = (dataModules["./data/local-data.json"] ?? dataModules["./data/sample-raw.json"]).default;
 import { FilterBar } from "./components/FilterBar";
 import { KpiRow } from "./components/KpiRow";
 import { Tabs, Card } from "./components/ui";

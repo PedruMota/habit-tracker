@@ -42,7 +42,19 @@ The original app reads live from a private Google Sheet via a service-account cr
 
 This repo ships instead with `frontend/src/data/sample-raw.json` — a **synthetic, seeded, anonymized dataset** (19 months, 12 habits across 7 categories) generated to mimic the exact shape of the real export: one row per habit per month-sheet, one column per day, values in `{"1", "0", "-"}` for hit / miss / rest. It's built with realistic weekday effects, a slow improving trend, and cross-habit correlation (so the correlation matrix has something real to show), but none of it is the author's actual history.
 
-If you want to point this at your own data: the ETL (`frontend/src/lib/etl.ts`) expects exactly that shape, so swapping `sample-raw.json` for your own export — or writing a small backend that proxies your Google Sheet into the same JSON shape — is the only integration point.
+### Running it against your own Google Sheet
+
+If you keep your own habit log in the same Google Sheets shape as the original (`main.py` / `etl/connection.py`), you can view *your* real data locally without ever committing it:
+
+```bash
+# from the repo root — needs your own credentials.json, same as the Streamlit app
+pip install -r requirements.txt
+python etl/export_for_frontend.py
+```
+
+This reuses `etl/connection.py` to pull every month-sheet and writes the result to `frontend/src/data/local-data.json` — a file listed in `frontend/.gitignore`, so it never gets staged or pushed. The app (`App.tsx`) prefers `local-data.json` over the bundled sample whenever it exists, so `npm run dev` picks it up automatically (re-run the export script any time you want to refresh it, and reload the page).
+
+There's no live backend proxy — this is a one-shot export you re-run when you want fresh data, not a persistent connection.
 
 ## Scoring engine
 

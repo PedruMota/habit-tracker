@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Personal habit data exported from your own Google Sheets — never commit this.
+src/data/local-data.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
